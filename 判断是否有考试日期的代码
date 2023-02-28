@@ -1,0 +1,61 @@
+'created date:2022.6.26
+'Author：Yang Guang
+'E-mail:guangyang@siemens-healthineers.com
+'Function:实现Excel自动发送邮件
+'使用方法：点击菜单栏的运行按钮（Run）；请忽略最后出现的错误；如果需要删除最后的错误，请修改程序中的F1000为实际的行数
+Sub AutoSendEmail(subject As String, receiver As String, body As String, attachment As String)
+    Debug.Print subject
+    '定义变量
+    '这是Outlook对象
+    Dim SiemensOutlookApp As Outlook.Application
+    '这是邮件对象
+    Dim SiemensMailItem As Outlook.MailItem
+    Set SiemensOutlookApp = New Outlook.Application
+    Set SiemensMailItem = SiemensOutlookApp.CreateItem(olMailItem)
+    '设置邮件的相关属性，如标题，收件人，邮件内容
+    With SiemensMailItem
+        .subject = subject '设置标题
+        .To = receiver '设置收件人
+        .body = body '设置邮件内容
+        'If Len(attachment) > 0 Then
+            '.Attachments.Add attachment
+        'End If
+        '.Display '显示邮件窗口，注释此行，将后台之间发送
+    End With
+    SiemensMailItem.Send
+End Sub
+
+
+
+
+'根据Excel表格数据，发送提醒邮件
+'进一步需求，实现指定到期日期内发送邮件提醒
+Sub AlertFromExcel()
+    Dim TableCell As Range '标识邮件相关信息的位置
+    Dim subject As String
+    Dim receiver As String
+    Dim body As String
+    Dim attachment As String
+    Set TableCell = Range("A1:F1000") 'set是将A1:F1000单元格每个对象赋值给了对象变量TableCell
+    '遍历邮件内容
+    For Row = 2 To TableCell.Rows.Count '从第二行开始对TableCell内容进行循环判断，返回当前单元格的行数Row
+        '判断当前的记录是否是一个月之内, 30天
+        If IsEmpty(Cells(Row, 2)) Then  '如果已经回复了考试日期，手动把考试日期填写进Excel表格的第二列，就不再重复通知对方参加考试；
+            If DateDiff("d", Now, Cells(Row, 7)) <= 180 Then  '将今天和每行第7列的日期进行对比，小于180天，执行下一步
+                Debug.Print "Auto Send Email" '执行Auto Send Email这个程序
+                subject = Cells(Row, 3).Text  '邮件主题就是每一行的第3列的内容
+                receiver = Cells(Row, 4).Text   '邮件地址就是每一行的第4列的内容
+                body = Cells(Row, 5).Text + Chr(10) + Chr(10) + Cells(Row, 6).Text    '邮件内容就是每一行的第5列和第六列的内容
+                'body2 = Cells(Row, 6).Text
+                '保存当前的工作簿
+                'attachment = "D:\UserData\z003tesj\OneDrive - Siemens Healthineers\杨广电脑本地\其他\培训\广州辐射考试\" & subject & ".xlsm"
+                '如文件已存在，执行删除操作
+                'If Dir(attachment) <> "" Then Kill attachment
+                'ActiveWorkbook.SaveCopyAs Filename:=attachment
+                '将上述内容发送邮件
+                AutoSendEmail subject, receiver, body, attachment
+            End If
+        End If
+    Next Row
+    
+End Sub
